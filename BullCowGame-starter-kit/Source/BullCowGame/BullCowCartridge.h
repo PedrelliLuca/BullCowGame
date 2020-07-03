@@ -23,6 +23,7 @@ class BULLCOWGAME_API UBullCowCartridge : public UCartridge
 	// Your declarations go below!
 	private:
 	FString HiddenWord;
+	TMap<TCHAR, int32> HiddenWordLetters;
 	int32 NLetters, NLives;
 	bool bGameOver;
 	TArray<FString> WordList;
@@ -30,7 +31,8 @@ class BULLCOWGAME_API UBullCowCartridge : public UCartridge
 	void SetupGame();
 	void EndGame();
 	void ProcessGuess(const FString& Guess);
-	bool IsIsogram(const FString& Word) const;
+	// bool IsIsogram(const FString& Word) const;
 	void StripNonValidWords();
-	FBullCowCount GetBullCows(const FString& Guess) const;
+	FBullCowCount GetBullCows(FString Guess) const;
+	void SetHiddenWordLetters();
 };

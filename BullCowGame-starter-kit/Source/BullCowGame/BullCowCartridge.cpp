@@ -37,23 +37,26 @@ void UBullCowCartridge::OnInput(const FString& Input) // When the player hits en
 void UBullCowCartridge::SetupGame()
 {
     HiddenWord = WordList[FMath::RandRange(0, WordList.Num() - 1)];
+    // HiddenWord = TEXT("eclectic"); Great word for testing purposes
+    SetHiddenWordLetters();
+
     NLetters = HiddenWord.Len();
-    NLives = NLetters;
+    NLives = 2 * NLetters; // The difficulty ramps up with non-isograms -> double lives!
     bGameOver = false;
 
-    // Printf is a function from the std library, it has no knowledge of custom types like FString.
-    // With %s Print wants string literals, i.e. const char pointers that are null-terminated.
-    // operator*() is redefined for FString so that it returns a string literal.
-    // We can avoid FString::Printf inside PrintLine thanks to the PrinLine override in Cartridge.h,
-    // we'll avoid that from now on.
-    PrintLine(FString::Printf(TEXT("The word to guess is %s."), *HiddenWord)); // For debug
+    // Testing only
+    // PrintLine(FString::Printf(TEXT("The word to guess is %s."), *HiddenWord));
+    // for (auto& Elem : HiddenWordLetters)
+    //     PrintLine(TEXT("(%c, %i)"), Elem.Key, Elem.Value);
+    
     PrintLine(TEXT("You have %i lives."), NLives);
-    PrintLine(TEXT("Guess the %i letters isogram."), NLetters);
+    PrintLine(TEXT("Guess the %i-letters word."), NLetters);
 }
 
 void UBullCowCartridge::EndGame()
 {
     bGameOver = true;
+    HiddenWordLetters.Empty();
     PrintLine(TEXT("Press enter to play again..."));
 }
 
@@ -66,20 +69,20 @@ void UBullCowCartridge::ProcessGuess(const FString& Guess)
         return;
     }
     
-    // Errors that do not cause to lose a file
+    // Error that do not cause to lose a life
     if (Guess.Len() != HiddenWord.Len())
     {
-        PrintLine(TEXT("The word you inserted has %i words,\nbut the hidden one has %i!"), Guess.Len(), NLetters);
-        PrintLine(TEXT("Guess the %i letters isogram."), NLetters);
+        PrintLine(TEXT("The word you inserted has %i letters,\nbut the hidden one has %i!"), Guess.Len(), NLetters);
+        PrintLine(TEXT("Guess the %i-letters word."), NLetters);
         return;
     }
 
-    if (!IsIsogram(Guess))
-    {
-        PrintLine(TEXT("The word you inserted is not an isogram,\nsome of its letters are the same!"));
-        PrintLine(TEXT("Guess the %i letters isogram."), NLetters);
-        return;
-    }
+    // if (!IsIsogram(Guess))
+    // {
+    //     PrintLine(TEXT("The word you inserted is not an isogram,\nsome of its letters are the same!"));
+    //     PrintLine(TEXT("Guess the %i-letters word."), NLetters);
+    //     return;
+    // }
 
     // Remove life
     PrintLine(TEXT("Wrong word, you lose a life.\nYou have %i left."), --NLives);
@@ -92,46 +95,59 @@ void UBullCowCartridge::ProcessGuess(const FString& Guess)
 
     FBullCowCount BullCow = GetBullCows(Guess);
     PrintLine(TEXT("You have %i Bulls and %i Cows."), BullCow.Bulls, BullCow.Cows);
-    PrintLine(TEXT("Guess the %i letters isogram."), NLetters);
+    PrintLine(TEXT("Guess the %i-letters word."), NLetters);
 }
 
-bool UBullCowCartridge::IsIsogram(const FString& Word) const
-{
-    for (int32 i=0; i < Word.Len()-1; i++)
-        for (int32  j=i+1; j < Word.Len(); j++)
-            if (Word[i] == Word[j])
-                return false;
+// bool UBullCowCartridge::IsIsogram(const FString& Word) const
+// {
+//     for (int32 i=0; i < Word.Len()-1; i++)
+//         for (int32  j=i+1; j < Word.Len(); j++)
+//             if (Word[i] == Word[j])
+//                 return false;
     
-    return true;
-}
+//     return true;
+// }
 
 void UBullCowCartridge::StripNonValidWords()
 {
     for (int32 i = 0; i < WordList.Num();)
-        if (!IsIsogram(WordList[i]) || WordList[i].Len() < 4 || WordList[i].Len() > 8)
+        if (/*!IsIsogram(WordList[i]) ||*/ WordList[i].Len() < 4 || WordList[i].Len() > 8)
             WordList.RemoveAt(i);
         else
             i++;
 }
 
-FBullCowCount UBullCowCartridge::GetBullCows(const FString& Guess) const
+FBullCowCount UBullCowCartridge::GetBullCows(FString CopyGuess) const
 {
     int32 BullCount = 0, CowCount = 0;
+    TMap<TCHAR, int32> AvailableLetters = HiddenWordLetters;
 
-    for (int32 i = 0; i < Guess.Len(); i++)
-    {
-        if (Guess[i] == HiddenWord[i])
+    // Checking for the bulls
+    for (int32 i = 0; i < CopyGuess.Len(); i++)
+        if (CopyGuess[i] == HiddenWord[i])
         {
             BullCount++;
-            continue;
+            AvailableLetters[CopyGuess[i]]--;
+            CopyGuess[i] = '$'; // Special character to replace bulls with. Avoids false cows in the for below.
         }
-        for (int32 j = 0; j < HiddenWord.Len(); j++)
-            if (Guess[i] == HiddenWord[j])
-            {
-                CowCount++;
-                break;
-            }
-    }
-
+    
+    // Checking for the cows on the remaining letters of the CopyGuess
+    for (auto Letter : CopyGuess)
+        if (AvailableLetters.Contains(Letter) && AvailableLetters[Letter] > 0)
+        {
+            CowCount++;
+            AvailableLetters[Letter]--;
+        }
+    
     return {BullCount, CowCount};
+}
+
+void UBullCowCartridge::SetHiddenWordLetters()
+{
+    for (auto Letter : HiddenWord)
+    {
+        if(!HiddenWordLetters.Contains(Letter))
+            HiddenWordLetters.Add(Letter);
+        HiddenWordLetters[Letter]++;
+    }
 }

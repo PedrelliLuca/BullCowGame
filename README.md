@@ -1,16 +1,18 @@
 # BullCowGame
-Simple game where the player has a limited number of tries to guess an isogram (word with no repeating letters).
 
-This game is the first of a series of Unreal4 projects I replicated following the [Unreal4 C++ Developer: Learn C++ and Make Video Games](https://www.gamedev.tv/p/learn-unreal-engine-c-developer-4-22-for-video-game-development?coupon=1D3ABAD8) course.
-It wasn't my first project in Unreal, and the level of difficulty was a bit too low even for a begginer course in my opinion, but I still learned something new about the engine so it was worth it.
+My second Unreal 4 project.
 
-## Game Flow
+## Gameplay
 
-The hidden isogram is extracted from a file containing 1000 words. The player has a number of tries equal to the lenght of the word to guess it correctly.
+- The player has a limited amount of chances to guess a hidden word.
+- After each try, if the player lives didn't reach 0, the game prompts how many bulls and cows the guess contained.
+  - A cow is a letter in the player's guess that is present in the hidden word at a different location.
+  - A bull is a letter in the player's guess that is present in the hidden word at the same location.
 
-After making a guess and pressing enter:
-- If the word is correct the player wins
+  The player can use this information to try again.
 
-- If the word is wrong but the player has some lives left, he loses one and receives a suggestion based on how many "cows" and "bulls" are in the word he typed.
-  - A cow is a letter that is in the hidden isogram but was inserted in the wrong position.
-  - A bull is a letter that is in the hidden isogram and in the right position.
+## Development
+
+This game is the first of a series I made following the [Unreal4 C++ Developer: Learn C++ and Make Video Games](https://www.gamedev.tv/p/learn-unreal-engine-c-developer-4-22-for-video-game-development?coupon=1D3ABAD8) course.
+
+Since this first project is meant for C++ beginners and I already had experience with the language, I wrote the majority of the code independently. I am quite satisfied with my results: I was able to extend the original project, which was limited to isograms (words with no repeating letters), to any kind of english word.
